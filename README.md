@@ -2,150 +2,275 @@
 
 [![CI Pipeline](https://github.com/proviaa-master/master-admin/actions/workflows/ci.yml/badge.svg)](https://github.com/proviaa-master/master-admin/actions/workflows/ci.yml)
 [![Backend CI](https://github.com/proviaa-master/master-admin/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/proviaa-master/master-admin/actions/workflows/backend-ci.yml)
-[![CD Deployment](https://github.com/proviaa-master/master-admin/actions/workflows/deploy.yml/badge.svg)](https://github.com/proviaa-master/master-admin/actions/workflows/deploy.yml)
 [![CodeQL Security](https://github.com/proviaa-master/master-admin/actions/workflows/codeql.yml/badge.svg)](https://github.com/proviaa-master/master-admin/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production-grade React application with Vite, TypeScript, Tailwind CSS, and a Node.js/Supabase backend, hosted under the **[proviaa-master](https://github.com/orgs/proviaa-master/)** organization.
+A production-grade, enterprise full-stack platform consisting of a **React 18 + Vite + TypeScript + Tailwind CSS** frontend and an **Express + TypeScript + Supabase (PostgreSQL)** backend, hosted under the **[proviaa-master](https://github.com/orgs/proviaa-master/)** organization.
 
 ---
 
-## 📋 Project Specifications
-
-| Property | Value |
-| :--- | :--- |
-| **Organization** | [`proviaa-master`](https://github.com/orgs/proviaa-master/) |
-| **Repository Name** | [`master-admin`](https://github.com/proviaa-master/master-admin) |
-| **Build Tool** | [Vite 5](https://vitejs.dev/) |
-| **Language** | [TypeScript 5.7](https://www.typescriptlang.org/) |
-| **Package Manager** | `npm` (Lockfile-based `npm ci`) |
-| **Node Version** | `20 LTS` (Matrix-tested on 18.x, 20.x, 22.x) |
-| **Testing Framework** | [Vitest 2](https://vitest.dev/) + [@testing-library/react](https://testing-library.com/) + Supertest |
-| **Code Quality** | ESLint 8 + Prettier 3 + TypeScript Strict Mode |
-| **Security Scanning** | CodeQL SAST + TruffleHog Secret Scanning + Dependabot + `npm audit` |
-| **Deployment Targets** | Vercel (PR Previews, Staging, Production with approval) / Docker container |
+## 📑 Table of Contents
+1. [Installation Steps to Local](#1-installation-steps-to-local)
+2. [Developer Rules and Conditions](#2-developer-rules-and-conditions)
+3. [Environment Variables & How They Are Achieved](#3-environment-variables--how-they-are-achieved)
 
 ---
 
-## 🌿 Git Branching Strategy & Branch Protection Rules
+## 1. Installation Steps to Local
 
-### 1. Branch Strategy
-- **`main`**: Production-ready code only. Directly corresponds to the Production environment (`https://proviaa.com`).
-- **`develop`**: Integration branch for pre-release features. Deploys to Staging (`https://staging.proviaa.com`).
-- **`feature/*` / `fix/*`**: Ephemeral development branches. Merge into `develop` via Pull Request.
+### Prerequisites
+Ensure the following tools are installed on your machine:
+- **Node.js**: `v20.x LTS` ([Download Node.js](https://nodejs.org/))
+- **npm**: `v10.x` or higher (bundled with Node.js)
+- **Git**: Installed and configured ([Download Git](https://git-scm.com/))
+- **Supabase Account**: A free Supabase project for database and authentication ([supabase.com](https://supabase.com))
 
-### 2. Branch Protection Rules (`main` and `develop`)
-Configure through GitHub Organization Settings or the GitHub API:
+---
+
+### Option A: Quickstart (Both Services Concurrently)
 
 ```bash
-# Using GitHub API or GitHub CLI (gh)
-gh api \
-  --method PUT \
-  -H "Accept: application/vnd.github+json" \
-  /repos/proviaa-master/master-admin/branches/main/protection \
-  -f required_status_checks[strict]=true \
-  -f required_status_checks[contexts][]="Code Quality (Lint, Format, Typecheck)" \
-  -f required_status_checks[contexts][]="Unit Tests (Node 20.x)" \
-  -f required_status_checks[contexts][]="Production Build & Bundle Size" \
-  -f required_status_checks[contexts][]="Backend Quality (Lint, Format, Typecheck)" \
-  -f required_status_checks[contexts][]="Backend Tests (Node 20.x)" \
-  -f required_status_checks[contexts][]="Backend Build & Artifact" \
-  -f enforce_admins=true \
-  -f required_pull_request_reviews[dismiss_stale_reviews]=true \
-  -f required_pull_request_reviews[require_code_owner_reviews]=false \
-  -f required_pull_request_reviews[required_approving_review_count]=1 \
-  -f restrictions=null
-```
+# 1. Clone the repository
+git clone https://github.com/proviaa-master/master-admin.git
+cd master-admin
 
-#### GitHub Web UI Configuration:
-1. Navigate to **Settings** > **Branches** > **Add branch protection rule**.
-2. **Branch name pattern**: `main` (and repeat for `develop`).
-3. Check **Require a pull request before merging**:
-   - Require approvals: `1`
-   - Dismiss stale pull request approvals when new commits are pushed
-4. Check **Require status checks to pass before merging**:
-   - Require branches to be up to date before merging
-   - Status checks required:
-     - `Code Quality (Lint, Format, Typecheck)`
-     - `Unit Tests (Node 20.x)`
-     - `Production Build & Bundle Size`
-5. Check **Do not allow bypassing the above settings**.
+# 2. Install all dependencies (root, backend, and frontend)
+npm run install:all
+
+# 3. Configure environment files (see Section 3 for details)
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+
+# 4. Start both frontend and backend concurrently
+npm run dev
+```
+- **Frontend App**: `http://localhost:5173`
+- **Backend API**: `http://localhost:8000/api`
+- **Health Check**: `http://localhost:8000/api/health`
 
 ---
 
-## 🛠️ Local Development & Quality Scripts
+### Option B: Step-by-Step Manual Setup
 
-All scripts can be executed either from the root or inside the `/frontend` directory:
+#### Step 1: Clone the Repository
+```bash
+git clone https://github.com/proviaa-master/master-admin.git
+cd master-admin
+```
+
+#### Step 2: Backend Setup
+```bash
+# Navigate to backend directory
+cd backend
+
+# Install dependencies using lockfile
+npm ci
+
+# Create your local environment file
+cp .env.example .env
+# Open .env and fill in your Supabase & JWT values (see Section 3)
+
+# (Optional) Run SQL database migrations
+npm run migrate
+
+# Start backend in development watch mode
+npm run dev
+```
+The backend server will start on `http://localhost:8000`.
+
+#### Step 3: Frontend Setup
+Open a new terminal window:
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies using lockfile
+npm ci
+
+# Create your local environment file
+cp .env.example .env
+# Open .env and configure VITE_ variables (see Section 3)
+
+# Start Vite development server
+npm run dev
+```
+The frontend will start on `http://localhost:5173`.
+
+#### Step 4: Verify Local Installation
+1. Open your browser and navigate to `http://localhost:5173`.
+2. Check the API health response at `http://localhost:8000/api/health`. You should receive:
+   ```json
+   {
+     "status": "UP",
+     "timestamp": "...",
+     "uptime": 12.34,
+     "environment": "development"
+   }
+   ```
+
+---
+
+## 2. Developer Rules and Conditions
+
+To maintain enterprise code quality, stability, and security, all contributors must strictly adhere to the following rules:
+
+### A. Frontend Rules
+1. **TypeScript Strictness**:
+   - `strict: true` is enforced in `tsconfig.json`.
+   - Never use `any`. Define explicit interfaces or types for all components, props, hooks, and API responses.
+   - Code must pass `npm run typecheck` with **0 errors**.
+2. **Linting & Code Style**:
+   - **ESLint**: Adhere to React Hooks rules, React Refresh rules, and TypeScript-ESLint standards.
+   - **Prettier**: Single quotes, 2 spaces, trailing commas, semicolons required. Code formatting is validated with `npm run format:check`.
+3. **Component & Unit Testing**:
+   - Every major page or complex UI component must have unit/integration tests using Vitest and React Testing Library in `src/test/`.
+   - All tests must pass cleanly (`npm run test`).
+4. **Clean Production Bundling**:
+   - Do not leave unused imports or dead code.
+   - Production Vite builds must compile cleanly without warnings (`npm run build`).
+
+---
+
+### B. Backend Rules & Runtime Restrictions
+1. **Security Headers (Helmet)**:
+   - All HTTP responses must carry standard Helmet security headers (HSTS, Content Security Policy, X-Content-Type-Options, Frameguard).
+2. **CORS Origin Whitelisting**:
+   - Only explicitly whitelisted client origins (`http://localhost:5173`, `http://localhost:3000`, and `CLIENT_ORIGIN`) are permitted to communicate with the API. Unauthorized origins receive an HTTP CORS rejection.
+3. **Strict Rate Limiting**:
+   - **Global Limiter**: Maximum 200 requests per 15-minute window per IP.
+   - **Auth Endpoints Limiter**: Maximum 15 requests per 15-minute window per IP on `/api/v1/auth/*` to prevent brute-force attacks.
+4. **Payload Size Restrictions (Anti-DoS)**:
+   - Request bodies are strictly capped at **1MB** (`express.json({ limit: "1mb" })`). Payloads exceeding this limit receive an `HTTP 413 Payload Too Large`.
+5. **Input Validation & SQL Safety**:
+   - Every incoming request body and query param must be validated using a **Zod** schema.
+   - **Never concatenate raw strings into SQL queries**. Always use parameterized queries or Supabase query builders to prevent SQL injection.
+6. **Database Migration Rules**:
+   - All schema modifications must be recorded as timestamped SQL files in `backend/migrations/<timestamp>_<name>.sql`.
+   - Migration files must never be empty and must follow SQL naming conventions.
+7. **Containerization Integrity**:
+   - The backend must remain container-agnostic. The multi-stage `backend/Dockerfile` must build without errors.
+
+---
+
+### C. Automated CI Quality Gates (GitHub Actions)
+Every Pull Request and push to `main` or `develop` triggers two parallel CI pipelines:
+- **`CI Pipeline` (Frontend)**: Linting, Prettier, TypeScript Typecheck, Vitest Unit Tests, Vite Production Build & Bundle Size Analysis.
+- **`Backend CI Pipeline` (Backend)**: ESLint, Prettier, Strict Typecheck, Supertest API/Security Tests, SQL Migration Validation, `tsc` compilation to `dist/index.js`, and Docker Build Verification.
+
+> [!IMPORTANT]
+> **Zero Tolerance Policy**: Pull request merges are **automatically blocked** if any CI stage fails.
+
+---
+
+### D. The Developer Workflow (Step-by-Step)
+
+```mermaid
+flowchart LR
+    A["1. git checkout develop<br/>(pull latest)"] --> B["2. Create feature branch<br/>(feature/name)"]
+    B --> C["3. Develop & Test Locally"]
+    C --> D["4. Run Pre-Commit Checklist"]
+    D --> E["5. Commit (Conventional) & Push"]
+    E --> F["6. Open PR targeting develop"]
+    F --> G["7. CI Passes (Green) & Merge"]
+```
+
+#### Pre-Commit Verification Checklist
+Before committing and pushing your code, run these verification commands locally:
 
 ```bash
-# 1. Install dependencies using lockfile
-npm run install:all          # Root
-npm ci                       # Inside /frontend
+# From the repository root (runs on both frontend & backend):
+npm run format:check   # Verifies formatting
+npm run lint           # Verifies ESLint rules (use 'npm run format:write' and 'npm run lint:fix' to fix)
+npm run typecheck      # Strict TypeScript check (0 errors)
+npm run test           # Executes all unit and integration tests
+npm run build          # Verifies production bundling for both services
+```
 
-# 2. Code Quality checks
-npm run lint                 # ESLint check
-npm run lint:fix             # ESLint automatic fix
-npm run format:check         # Prettier verification
-npm run format:write         # Prettier auto-formatting
-npm run typecheck            # TypeScript compiler check (tsc --noEmit)
+#### Commit Message Convention
+Use standard Conventional Commits:
+- `feat: <description>` - A new feature
+- `fix: <description>` - A bug fix
+- `refactor: <description>` - Code change that neither fixes a bug nor adds a feature
+- `test: <description>` - Adding or updating tests
+- `chore: <description>` - Build process, tooling, or dependency updates
 
-# 3. Unit testing & coverage
-npm run test                 # Run Vitest test suite
-npm run test:watch           # Watch mode for active development
-npm run test:coverage        # Vitest with v8 coverage threshold
+---
 
-# 4. Production build & local preview
-npm run build                # TypeScript compilation + Vite production bundle
-npm run preview              # Local preview of the production build (http://localhost:4173)
+## 3. Environment Variables & How They Are Achieved
+
+### A. Backend Variables (`backend/.env`)
+
+| Variable | Type | Default | Description | How to Obtain / Achieve |
+| :--- | :--- | :--- | :--- | :--- |
+| `PORT` | Number | `8000` | Port on which Express server listens | Set to `8000` or any available local port. |
+| `NODE_ENV` | String | `development` | Runtime environment (`development`, `production`, `test`) | Use `development` locally. CI uses `test`. |
+| `BASE_PATH` | String | `/api` | Root prefix for all API routes | Kept as `/api` to standardise API endpoints. |
+| `CLIENT_ORIGIN` | String | `http://localhost:5173` | Allowed frontend origin for CORS | Set to your local Vite URL (`http://localhost:5173`) or production client domain. |
+| `SUPABASE_URL` | URL | - | Supabase project REST API endpoint | **Supabase Dashboard**: Go to **Project Settings** > **API** > copy **Project URL**. |
+| `SUPABASE_ANON_KEY` | String | - | Public anonymous API key for Supabase client | **Supabase Dashboard**: Go to **Project Settings** > **API** > copy **Project API Keys** (`anon` / `public`). |
+| `DATABASE_URL` | URI | - | Direct PostgreSQL connection string for SQL migrations | **Supabase Dashboard**: Go to **Project Settings** > **Database** > **Connection string** > select **URI** (Session or Transaction mode) and insert your database password. |
+| `JWT_SECRET` | String | - | 256-bit secret key used to sign and verify auth tokens | **Generate via Terminal**: Run the command below to generate a secure random key:<br/>`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `JWT_EXPIRES_IN` | String | `7d` | Token lifespan | Set to `7d` (7 days) or `24h` depending on security requirements. |
+
+#### Backend `.env` Example:
+```env
+PORT=8000
+NODE_ENV=development
+BASE_PATH=/api
+CLIENT_ORIGIN=http://localhost:5173
+
+# Supabase Credentials
+SUPABASE_URL=https://xyzcompany.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# PostgreSQL Direct Connection for Migrations
+DATABASE_URL=postgresql://postgres.xyzcompany:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require
+
+# JWT Secret (Generated via crypto.randomBytes)
+JWT_SECRET=4f8b92d6e3c1a85f7e0d2b4c6a8f1e3d5b7c9a1e3f5d7b9c1a3e5f7d9b1c3a5e
+JWT_EXPIRES_IN=7d
 ```
 
 ---
 
-## 🔄 CI/CD Pipeline Stages
+### B. Frontend Variables (`frontend/.env`)
 
-### 1. `ci.yml` (Continuous Integration)
-- **Triggers**: Push to `main`/`develop`, Pull Requests to `main`/`develop`, and manual `workflow_dispatch`.
-- **Concurrency Control**: Outdated in-flight runs are automatically cancelled when a new commit is pushed.
-- **Stage 1: Quality**: Runs ESLint, Prettier, and `tsc --noEmit` in parallel with clean npm cache.
-- **Stage 2: Security**: Scans dependencies with `npm audit` and scans repository for leaked credentials with TruffleHog.
-- **Stage 3: Test Matrix**: Executes Vitest across Node 18, 20, and 22 LTS, enforces coverage thresholds, and saves coverage reports as artifacts.
-- **Stage 4: Build**: Compiles production bundle with Vite, generates bundle-size step summary, and uploads `dist/` as a workflow artifact.
-- **Stage 5: Lighthouse CI**: Audits performance, accessibility, best practices, and SEO against the production bundle.
-- **Stage 6: Summary**: Compiles markdown table report in the GitHub Action Step Summary.
+> [!NOTE]
+> Vite requires client-accessible environment variables to be prefixed with `VITE_`. Any variable without this prefix is omitted from the client bundle for security.
 
-### 2. `deploy.yml` (Continuous Delivery)
-- **PR Preview**: Triggered on pull requests. Builds preview bundle, creates Vercel preview deployment, and comments the active preview URL on the PR.
-- **Staging**: Triggered on merge to `develop`. Deploys directly to staging environment.
-- **Production**: Triggered on merge to `main`. Protected by GitHub Environment **`production`** requiring mandatory reviewer approval before release.
+| Variable | Type | Default | Description | How to Obtain / Achieve |
+| :--- | :--- | :--- | :--- | :--- |
+| `VITE_API_BASE_URL` | String | `/api` | Base URL used by Axios/Fetch to reach backend API | Set to `/api` (proxied by Vite) or `http://localhost:8000/api` for direct local development. |
+| `VITE_SUPABASE_URL` | URL | - | Supabase REST URL for frontend Supabase client | Same as backend `SUPABASE_URL` (Supabase Dashboard > **Project Settings** > **API** > **Project URL**). |
+| `VITE_SUPABASE_ANON_KEY` | String | - | Public anonymous API key safe for browser use | Same as backend `SUPABASE_ANON_KEY` (Supabase Dashboard > **Project Settings** > **API** > `anon` public key). |
 
-### 3. `codeql.yml` (Security SAST)
-- Performs semantic Static Application Security Testing (SAST) using GitHub CodeQL for JavaScript/TypeScript weekly and on pull requests.
+#### Frontend `.env` Example:
+```env
+# Backend API Base URL
+VITE_API_BASE_URL=/api
 
----
-
-## 🔑 Required GitHub Secrets
-
-Configure in **Repository Settings** > **Secrets and variables** > **Actions**:
-
-| Secret Name | Purpose | How to obtain |
-| :--- | :--- | :--- |
-| `VERCEL_TOKEN` | Authentication for Vercel deployment CLI | [Vercel Account Tokens](https://vercel.com/account/tokens) |
-| `VERCEL_ORG_ID` | Vercel team/org identifier | Found in `.vercel/project.json` or project settings |
-| `VERCEL_PROJECT_ID` | Target Vercel project identifier | Found in Vercel project general settings |
-| `SUPABASE_URL` | Supabase API URL for build injection | Supabase Project Settings > API |
-| `SUPABASE_ANON_KEY` | Public client anon key | Supabase Project Settings > API |
-
----
-
-## 🐳 Docker Deployment (Optional)
-
-Build and run the production-optimized multi-stage Docker container locally or on any cloud runtime:
-
-```bash
-# Build the production image
-docker build -t proviaa-frontend ./frontend
-
-# Run the container on port 80
-docker run -p 8080:80 proviaa-frontend
+# Supabase Client Credentials
+VITE_SUPABASE_URL=https://xyzcompany.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
-Open `http://localhost:8080` in your browser.
+
+---
+
+### C. Step-by-Step Guide: How to Obtain Supabase Credentials
+
+1. **Log In to Supabase**:
+   - Visit [supabase.com](https://supabase.com) and log in or create an account.
+2. **Create or Open Your Project**:
+   - Click **New Project**, select your organization, choose a region close to your users, and define a database password (save this password securely).
+3. **Get API Keys (`SUPABASE_URL` & `SUPABASE_ANON_KEY`)**:
+   - In the left sidebar, click the gear icon (⚙️) to open **Project Settings**.
+   - Click **API**.
+   - Under **Project URL**, copy the URL (e.g., `https://abcdefghijkl.supabase.co`).
+   - Under **Project API keys**, find the key named **`anon` `public`** and click **Copy**.
+4. **Get Connection String (`DATABASE_URL`)**:
+   - In **Project Settings**, click **Database**.
+   - Scroll down to **Connection string**.
+   - Select the **URI** tab.
+   - Copy the string and replace `[YOUR-PASSWORD]` with the database password set in Step 2.
+5. **Paste into `.env` Files**:
+   - Copy the values into `backend/.env` and `frontend/.env`.
