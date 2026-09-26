@@ -11,6 +11,7 @@ on:
       - develop
   schedule:
     - cron: '0 6 * * 1' # Runs every Monday at 06:00 UTC
+  workflow_dispatch:
 
 permissions:
   actions: read
@@ -37,3 +38,15 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:javascript-typescript"
+        # For private repositories without a GitHub Advanced Security (GHAS) license,
+        # continue-on-error prevents this step from blocking or failing the pipeline.
+        continue-on-error: true
+
+      - name: Upload SARIF Report as Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif-report
+          path: ../results/
+          retention-days: 14
+        continue-on-error: true
