@@ -1,43 +1,4 @@
 version: 2
-updates:
-  # GitHub Actions updates (Grouped, ignore major breaking changes)
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 1
-    groups:
-      github-actions:
-        patterns:
-          - "*"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-
-  # Frontend dependencies (Grouped, ignore major breaking changes)
-  - package-ecosystem: "npm"
-    directory: "/frontend"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 1
-    groups:
-      frontend-dependencies:
-        patterns:
-          - "*"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-
-  # Backend dependencies (Grouped, ignore major breaking changes)
-  - package-ecosystem: "npm"
-    directory: "/backend"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 1
-    groups:
-      backend-dependencies:
-        patterns:
-          - "*"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+# Dependabot version updates are disabled to prevent automated PR spam.
+# Security vulnerability alerts remain active via GitHub Security settings.
+updates: []
