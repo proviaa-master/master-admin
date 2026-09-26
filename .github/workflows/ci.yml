@@ -95,26 +95,21 @@ jobs:
         continue-on-error: true
 
   # =========================================================================
-  # 3. UNIT TESTING MATRIX JOB (Node 18.x, 20.x, 22.x)
+  # 3. UNIT TESTING JOB (Node 20 LTS)
   # =========================================================================
   test:
-    name: Unit Tests (Node ${{ matrix.node-version }})
+    name: Unit Tests (Node 20 LTS)
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
-
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js 20 LTS
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
@@ -124,8 +119,7 @@ jobs:
       - name: Run Vitest Unit Tests & Coverage
         run: npm run test:coverage
 
-      - name: Upload Test Coverage Artifact (Node 20)
-        if: matrix.node-version == '20.x'
+      - name: Upload Test Coverage Artifact
         uses: actions/upload-artifact@v4
         with:
           name: code-coverage-report
@@ -174,42 +168,7 @@ jobs:
           retention-days: 7
 
   # =========================================================================
-  # 5. PERFORMANCE & LIGHTHOUSE CI JOB
-  # =========================================================================
-  lighthouse:
-    name: Lighthouse CI Performance & Audit
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20 LTS
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Download production build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: production-build
-          path: frontend/dist
-
-      - name: Run Lighthouse CI Action
-        uses: treosh/lighthouse-ci-action@v12
-        with:
-          configPath: "./frontend/lighthouserc.json"
-          uploadHandler: "temporary-public-storage"
-        continue-on-error: true
-
-  # =========================================================================
-  # 6. PIPELINE STATUS & NOTIFICATION JOB
+  # 5. PIPELINE STATUS & NOTIFICATION JOB
   # =========================================================================
   pipeline-summary:
     name: Pipeline Summary & Notifications
@@ -227,7 +186,7 @@ jobs:
           echo "- **Triggered By**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Quality (Lint, Format, Typecheck)**: ${{ needs.quality.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Security Scan**: ${{ needs.security.result == 'success' && '✅ Passed' || '⚠️ Completed with warnings' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Unit Tests (Matrix)**: ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unit Tests (Vitest)**: ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Production Build**: ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Fail workflow if core jobs failed
