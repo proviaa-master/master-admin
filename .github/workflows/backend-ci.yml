@@ -5,18 +5,10 @@ on:
     branches:
       - main
       - develop
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
-      - "package.json"
   pull_request:
     branches:
       - main
       - develop
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
-      - "package.json"
   workflow_dispatch:
 
 concurrency:

@@ -5,20 +5,10 @@ on:
     branches:
       - main
       - develop
-    paths:
-      - "frontend/**"
-      - ".github/workflows/ci.yml"
-      - "package.json"
-      - "package-lock.json"
   pull_request:
     branches:
       - main
       - develop
-    paths:
-      - "frontend/**"
-      - ".github/workflows/ci.yml"
-      - "package.json"
-      - "package-lock.json"
   workflow_dispatch:
 
 # Concurrency control: cancel outdated in-progress runs for the same branch / PR
