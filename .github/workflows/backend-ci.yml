@@ -120,8 +120,10 @@ jobs:
           NODE_ENV: test
           PORT: 8001
           JWT_SECRET: ci-test-jwt-secret-key-1234567890
+          JWT_EXPIRES_IN: 7d
           SUPABASE_URL: https://ci-mock.supabase.co
           SUPABASE_ANON_KEY: ci-mock-anon-key
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
       - name: Upload Test Coverage Artifact
         uses: actions/upload-artifact@v4
