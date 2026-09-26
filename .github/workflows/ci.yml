@@ -136,7 +136,7 @@ jobs:
 
       - name: Upload Test Coverage Artifact (Node 20)
         if: matrix.node-version == '20.x'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: code-coverage-report
           path: frontend/coverage/
@@ -177,7 +177,7 @@ jobs:
           done
 
       - name: Upload production build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: production-build
           path: frontend/dist/
