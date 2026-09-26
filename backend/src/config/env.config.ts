@@ -11,7 +11,7 @@ export const Env = {
   SUPABASE_ANON_KEY: getEnv("SUPABASE_ANON_KEY", "placeholder-anon-key"),
 
   // Direct PostgreSQL Connection (used for migrations)
-  DATABASE_URL: process.env.DATABASE_URL || "",
+  DATABASE_URL: getEnv("DATABASE_URL", ""),
 
   // JWT Configuration (mirroring TechWithEmma system)
   JWT_SECRET: getEnv("JWT_SECRET", "super-secret-jwt-pos-key-1234567890"),
