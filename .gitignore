@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing and Coverage
+coverage/
+frontend/coverage/
+*.lcov
+
+# Production & Build outputs
+dist/
+build/
+frontend/dist/
+backend/dist/
+
+# Lighthouse CI
+.lhci/
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Cache & Temporary Files
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+.vite/
+frontend/.vite/
+
+# Deployment & Hosting
+.vercel
+.netlify
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

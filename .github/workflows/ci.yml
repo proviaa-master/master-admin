@@ -1,0 +1,244 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "frontend/**"
+      - ".github/workflows/ci.yml"
+      - "package.json"
+      - "package-lock.json"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "frontend/**"
+      - ".github/workflows/ci.yml"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch:
+
+# Concurrency control: cancel outdated in-progress runs for the same branch / PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  security-events: write
+
+defaults:
+  run:
+    working-directory: ./frontend
+
+jobs:
+  # =========================================================================
+  # 1. CODE QUALITY JOB (ESLint, Prettier, TypeScript Typecheck)
+  # =========================================================================
+  quality:
+    name: Code Quality (Lint, Format, Typecheck)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies (lockfile based)
+        run: npm ci
+
+      - name: Check code formatting (Prettier)
+        run: npm run format:check
+
+      - name: Run linter (ESLint)
+        run: npm run lint
+
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
+
+  # =========================================================================
+  # 2. SECURITY SCAN JOB (npm audit & Secret Scanning)
+  # =========================================================================
+  security:
+    name: Security & Secret Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit check
+        run: |
+          echo "Running dependency vulnerability scan..."
+          npm audit --audit-level=high || echo "Vulnerabilities detected. Review audit logs."
+
+      - name: Secret scanning (TruffleHog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+        continue-on-error: true
+
+  # =========================================================================
+  # 3. UNIT TESTING MATRIX JOB (Node 18.x, 20.x, 22.x)
+  # =========================================================================
+  test:
+    name: Unit Tests (Node ${{ matrix.node-version }})
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Vitest Unit Tests & Coverage
+        run: npm run test:coverage
+
+      - name: Upload Test Coverage Artifact (Node 20)
+        if: matrix.node-version == '20.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: frontend/coverage/
+          retention-days: 14
+
+  # =========================================================================
+  # 4. PRODUCTION BUILD JOB (Artifact Upload & Bundle Analysis)
+  # =========================================================================
+  build:
+    name: Production Build & Bundle Size
+    needs: [quality, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle (Vite)
+        run: npm run build
+
+      - name: Analyze bundle size
+        run: |
+          echo "### Production Bundle Size Breakdown" >> $GITHUB_STEP_SUMMARY
+          echo "| Asset File | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          du -ah dist/assets/ | while read size file; do
+            echo "| \`$(basename $file)\` | **$size** |" >> $GITHUB_STEP_SUMMARY
+          done
+
+      - name: Upload production build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: frontend/dist/
+          retention-days: 7
+
+  # =========================================================================
+  # 5. PERFORMANCE & LIGHTHOUSE CI JOB
+  # =========================================================================
+  lighthouse:
+    name: Lighthouse CI Performance & Audit
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download production build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+          path: frontend/dist
+
+      - name: Run Lighthouse CI Action
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: "./frontend/lighthouserc.json"
+          uploadHandler: "temporary-public-storage"
+        continue-on-error: true
+
+  # =========================================================================
+  # 6. PIPELINE STATUS & NOTIFICATION JOB
+  # =========================================================================
+  pipeline-summary:
+    name: Pipeline Summary & Notifications
+    needs: [quality, security, test, build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Pipeline Status Summary
+        run: |
+          echo "## 🚀 CI Pipeline Results for Commit \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch / Ref**: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered By**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Quality (Lint, Format, Typecheck)**: ${{ needs.quality.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Scan**: ${{ needs.security.result == 'success' && '✅ Passed' || '⚠️ Completed with warnings' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unit Tests (Matrix)**: ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Production Build**: ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail workflow if core jobs failed
+        if: needs.quality.result != 'success' || needs.test.result != 'success' || needs.build.result != 'success'
+        run: |
+          echo "One or more critical CI stages failed. Pull request merge is blocked."
+          exit 1
