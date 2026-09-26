@@ -1,8 +1,9 @@
-# Proviyaa Master - Frontend & Full-Stack Platform
+# Proviyaa Master Admin - Full-Stack Platform
 
-[![CI Pipeline](https://github.com/proviaa-master/proviaa-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/proviaa-master/proviaa-frontend/actions/workflows/ci.yml)
-[![CD Deployment](https://github.com/proviaa-master/proviaa-frontend/actions/workflows/deploy.yml/badge.svg)](https://github.com/proviaa-master/proviaa-frontend/actions/workflows/deploy.yml)
-[![CodeQL Security](https://github.com/proviaa-master/proviaa-frontend/actions/workflows/codeql.yml/badge.svg)](https://github.com/proviaa-master/proviaa-frontend/actions/workflows/codeql.yml)
+[![CI Pipeline](https://github.com/proviaa-master/master-admin/actions/workflows/ci.yml/badge.svg)](https://github.com/proviaa-master/master-admin/actions/workflows/ci.yml)
+[![Backend CI](https://github.com/proviaa-master/master-admin/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/proviaa-master/master-admin/actions/workflows/backend-ci.yml)
+[![CD Deployment](https://github.com/proviaa-master/master-admin/actions/workflows/deploy.yml/badge.svg)](https://github.com/proviaa-master/master-admin/actions/workflows/deploy.yml)
+[![CodeQL Security](https://github.com/proviaa-master/master-admin/actions/workflows/codeql.yml/badge.svg)](https://github.com/proviaa-master/master-admin/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A production-grade React application with Vite, TypeScript, Tailwind CSS, and a Node.js/Supabase backend, hosted under the **[proviaa-master](https://github.com/orgs/proviaa-master/)** organization.
@@ -14,12 +15,12 @@ A production-grade React application with Vite, TypeScript, Tailwind CSS, and a 
 | Property | Value |
 | :--- | :--- |
 | **Organization** | [`proviaa-master`](https://github.com/orgs/proviaa-master/) |
-| **Repository Name** | `proviaa-frontend` (or `proviaa-master-admin`) |
+| **Repository Name** | [`master-admin`](https://github.com/proviaa-master/master-admin) |
 | **Build Tool** | [Vite 5](https://vitejs.dev/) |
 | **Language** | [TypeScript 5.7](https://www.typescriptlang.org/) |
 | **Package Manager** | `npm` (Lockfile-based `npm ci`) |
 | **Node Version** | `20 LTS` (Matrix-tested on 18.x, 20.x, 22.x) |
-| **Testing Framework** | [Vitest 2](https://vitest.dev/) + [@testing-library/react](https://testing-library.com/) |
+| **Testing Framework** | [Vitest 2](https://vitest.dev/) + [@testing-library/react](https://testing-library.com/) + Supertest |
 | **Code Quality** | ESLint 8 + Prettier 3 + TypeScript Strict Mode |
 | **Security Scanning** | CodeQL SAST + TruffleHog Secret Scanning + Dependabot + `npm audit` |
 | **Deployment Targets** | Vercel (PR Previews, Staging, Production with approval) / Docker container |
@@ -34,18 +35,21 @@ A production-grade React application with Vite, TypeScript, Tailwind CSS, and a 
 - **`feature/*` / `fix/*`**: Ephemeral development branches. Merge into `develop` via Pull Request.
 
 ### 2. Branch Protection Rules (`main` and `develop`)
-Configure through GitHub Organization Settings or the GitHub CLI:
+Configure through GitHub Organization Settings or the GitHub API:
 
 ```bash
-# Using GitHub CLI (gh)
+# Using GitHub API or GitHub CLI (gh)
 gh api \
   --method PUT \
   -H "Accept: application/vnd.github+json" \
-  /repos/proviaa-master/proviaa-frontend/branches/main/protection \
+  /repos/proviaa-master/master-admin/branches/main/protection \
   -f required_status_checks[strict]=true \
   -f required_status_checks[contexts][]="Code Quality (Lint, Format, Typecheck)" \
   -f required_status_checks[contexts][]="Unit Tests (Node 20.x)" \
   -f required_status_checks[contexts][]="Production Build & Bundle Size" \
+  -f required_status_checks[contexts][]="Backend Quality (Lint, Format, Typecheck)" \
+  -f required_status_checks[contexts][]="Backend Tests (Node 20.x)" \
+  -f required_status_checks[contexts][]="Backend Build & Artifact" \
   -f enforce_admins=true \
   -f required_pull_request_reviews[dismiss_stale_reviews]=true \
   -f required_pull_request_reviews[require_code_owner_reviews]=false \
