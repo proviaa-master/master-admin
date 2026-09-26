@@ -1,4 +1,22 @@
 version: 2
-# Dependabot version updates are disabled to prevent automated PR spam.
-# Security vulnerability alerts remain active via GitHub Security settings.
-updates: []
+updates:
+  # Maintain dependencies for GitHub Actions (PR creation disabled)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 0
+
+  # Maintain dependencies for frontend (PR creation disabled)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 0
+
+  # Maintain dependencies for backend (PR creation disabled)
+  - package-ecosystem: "npm"
+    directory: "/backend"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 0
