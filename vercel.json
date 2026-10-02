@@ -3,11 +3,15 @@
   "services": {
     "frontend": {
       "root": "frontend",
-      "framework": "vite"
+      "framework": "vite",
+      "installCommand": "npm install",
+      "buildCommand": "npm run build"
     },
     "backend": {
       "root": "backend",
-      "framework": "express"
+      "framework": "express",
+      "installCommand": "npm install",
+      "entrypoint": "src/index.ts"
     }
   },
   "rewrites": [
