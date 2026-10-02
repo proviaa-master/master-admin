@@ -11,8 +11,7 @@
       "root": "backend",
       "framework": "express",
       "installCommand": "npm install",
-      "buildCommand": "npm run build",
-      "entrypoint": "dist/index.js"
+      "entrypoint": "src/index.ts"
     }
   },
   "rewrites": [
